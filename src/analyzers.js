@@ -1,4 +1,26 @@
-﻿//////////////////////
+﻿/* analyzers.js - Análisis y resaltado de sintaxis para código Dart (básico)
+   ====================================================
+   - Análisis Léxico: Se tokeniza cada línea y se reportan tokens no válidos.
+   - Análisis Sintáctico:
+         • Se verifica la existencia de la función main.
+         • Se comprueba que las sentencias (fuera de bloques o estructuras de control) terminen en ";".
+         • Se valida que las estructuras condicionales y de ciclo tengan paréntesis.
+         • Se verifica globalmente el balance de paréntesis, corchetes y llaves utilizando un stack.
+   - Análisis Semántico:
+         • Variables:
+              - Se detectan las declaraciones usando una expresión regular.
+              - Se valida que no existan duplicados.
+              - Se verifica que la expresión asignada coincida con el tipo declarado:
+                    * String: debe ser un literal entre comillas.
+                    * int: o bien un literal entero (o una expresión que contenga solo dígitos, operadores, puntos y paréntesis)
+                    * double: literal numérico (con o sin decimal) o expresión puramente numérica.
+                    * bool: debe ser "true" o "false".
+                    * List: debe tener la forma literal de una lista (inicia con "[" y termina con "]").
+         • Uso de variables: Se revisa que cada identificador (fuera de literales) haya sido declarado previamente.
+   - Resaltado de Sintaxis: Se colorean palabras clave, cadenas, comentarios, números, identificadores y operadores.
+*/
+
+//////////////////////
 // Funciones Básicas
 //////////////////////
 
@@ -61,31 +83,37 @@ function tokenizeLine(line, lineIndex, lexicalErrors) {
 }
 
 //////////////////////////
-// Validación de Balance
+// Validación Global de Balance
 //////////////////////////
 
-// Verifica de forma básica que en la línea (sin cadenas) los paréntesis, corchetes y llaves estén balanceados.
-function checkBalance(line, lineIndex) {
-    // Eliminar cadenas simples o dobles para no contar símbolos dentro de ellas.
-    let lineWithoutStrings = line.replace(/(["'])(?:(?=(\\?))\2.)*?\1/g, "");
-    let errors = [];
-    let countPar = 0, countBrack = 0, countBrace = 0;
-    for (let char of lineWithoutStrings) {
-        if (char === "(") countPar++;
-        else if (char === ")") countPar--;
-        else if (char === "[") countBrack++;
-        else if (char === "]") countBrack--;
-        else if (char === "{") countBrace++;
-        else if (char === "}") countBrace--;
+function checkGlobalBalance(code) {
+    const stack = [];
+    const errors = [];
+    const pairs = { '(': ')', '{': '}', '[': ']' };
+    const lines = code.split("\n");
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+        let line = lines[lineIndex];
+        // Eliminar literales de cadena para no contar símbolos dentro de ellas
+        let lineWithoutStrings = line.replace(/(["'])(?:(?=(\\?))\2.)*?\1/g, "");
+        for (let charIndex = 0; charIndex < lineWithoutStrings.length; charIndex++) {
+            const char = lineWithoutStrings[charIndex];
+            if (char === '(' || char === '{' || char === '[') {
+                stack.push({ symbol: char, line: lineIndex });
+            } else if (char === ')' || char === '}' || char === ']') {
+                if (stack.length === 0) {
+                    errors.push(`Error sintáctico en línea ${lineIndex + 1}: No hay símbolo de apertura para "${char}".`);
+                } else {
+                    const last = stack.pop();
+                    if (pairs[last.symbol] !== char) {
+                        errors.push(`Error sintáctico en línea ${lineIndex + 1}: Símbolo "${last.symbol}" en línea ${last.line+1} no coincide con "${char}".`);
+                    }
+                }
+            }
+        }
     }
-    if (countPar !== 0) {
-        errors.push(`Error sintáctico en línea ${lineIndex + 1}: Paréntesis no balanceados.`);
-    }
-    if (countBrack !== 0) {
-        errors.push(`Error sintáctico en línea ${lineIndex + 1}: Corchetes no balanceados.`);
-    }
-    if (countBrace !== 0) {
-        errors.push(`Error sintáctico en línea ${lineIndex + 1}: Llaves no balanceadas.`);
+    while (stack.length > 0) {
+        const leftover = stack.pop();
+        errors.push(`Error sintáctico en línea ${leftover.line+1}: Falta cerrar "${leftover.symbol}".`);
     }
     return errors;
 }
@@ -110,7 +138,7 @@ function applySyntaxHighlighting(code) {
         '|' +
         '(\\b[a-zA-Z_][a-zA-Z0-9_]*\\b)' +
         '|' +
-        '([{}()\\[\\];,=+\\-\\*\\/<>&|!])'
+        '([{}()\\[\\];,=+\\-\\*\\/<>&|!#])'  // Agregamos '#' aquí
         , 'gm');
     return code.replace(syntaxRegex, (match, g1, g2, g3, g4, g5, g6, g7, g8) => {
         if (g1 !== undefined) {
@@ -134,7 +162,6 @@ function applySyntaxHighlighting(code) {
 
 function updateHighlighting() {
     let code = document.getElementById("codeArea").value;
-    // Reemplazar tabs por 4 espacios para consistencia
     code = code.replace(/\t/g, '    ');
     document.getElementById("highlightedCode").innerHTML = applySyntaxHighlighting(code);
 }
@@ -164,60 +191,95 @@ function analyzeCode() {
     }
     cleanLines.forEach((line, lineIndex) => {
         const trimmed = line.trim();
-        // Validación básica de terminación de sentencias (salvo excepciones)
+        // Si la línea no es vacía, no es un bloque y no inicia con estructuras de control:
         if (trimmed !== "" &&
             !trimmed.endsWith("{") &&
             !trimmed.endsWith("}") &&
-            !trimmed.startsWith("if") &&
-            !trimmed.startsWith("for") &&
-            !trimmed.startsWith("while") &&
-            !trimmed.includes("main(") &&
-            !trimmed.startsWith("else") &&
-            !trimmed.endsWith(")")) {
+            !(trimmed.startsWith("if") || trimmed.startsWith("for") || trimmed.startsWith("while") || trimmed.startsWith("else"))) {
             if (!trimmed.endsWith(";")) {
                 syntacticErrors.push(`Error sintáctico en línea ${lineIndex + 1}: Falta ";" al final de la sentencia.`);
             }
         }
-        // Validar estructuras condicionales y ciclos: deben incluir paréntesis.
+        // Validar que condicionales y ciclos incluyan paréntesis.
         if (trimmed.startsWith("if") || trimmed.startsWith("for") || trimmed.startsWith("while")) {
             if (!trimmed.includes("(") || !trimmed.includes(")")) {
                 syntacticErrors.push(`Error sintáctico en línea ${lineIndex + 1}: Estructura mal formada en "${trimmed.split(" ")[0]}".`);
             }
         }
-        // Validación de balance de paréntesis, corchetes y llaves (línea por línea)
-        const balanceErrors = checkBalance(line, lineIndex);
-        if (balanceErrors.length > 0) {
-            syntacticErrors.push(...balanceErrors);
-        }
     });
+    // Verificar el balance global de paréntesis, corchetes y llaves.
+    const balanceErrors = checkGlobalBalance(cleanCode);
+    syntacticErrors.push(...balanceErrors);
 
-    // --- Análisis Semántico: Variables ---
-    // (a) Recolectar variables declaradas
-    let declaredVariables = [];
-    const declarationTypes = ["var", "String", "int", "double", "bool", "List"];
+    // --- Análisis Semántico: Variables y Tipos ---
+    // (a) Recolectar variables declaradas usando una expresión regular para declaraciones.
+    // Se espera que la declaración esté en una sola línea y termine con ";".
+    let declaredVariables = {};
+    const varDeclRegex = /^(var|String|int|double|bool|List)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+);$/;
     cleanLines.forEach((line, lineIndex) => {
-        const tokens = line.match(/("([^"\\]*(\\.[^"\\]*)*)")|(\d+(\.\d+)?)|([a-zA-Z_][a-zA-Z0-9_]*)|([{}()\[\];,=+\-*\/<>!&|])/g);
-        if (tokens && tokens.length >= 2 && declarationTypes.includes(tokens[0])) {
-            const varName = tokens[1];
-            if (declaredVariables.includes(varName)) {
+        let trimmed = line.trim();
+        let match = trimmed.match(varDeclRegex);
+        if (match) {
+            let type = match[1];
+            let varName = match[2];
+            let expression = match[3].trim();
+            if (declaredVariables[varName]) {
                 semanticErrors.push(`Error semántico en línea ${lineIndex + 1}: Variable duplicada "${varName}".`);
             } else {
-                declaredVariables.push(varName);
+                declaredVariables[varName] = type;
+            }
+            // Validar asignación según tipo.
+            if (type === "String") {
+                if (!expression.match(/^["'][^"']*["']$/)) {
+                    semanticErrors.push(`Error semántico en línea ${lineIndex + 1}: Asignación inválida a variable de tipo String. Se esperaba una cadena literal.`);
+                }
+            } else if (type === "int") {
+                // Si la expresión es un solo token (sin espacios ni operadores), validamos que sea un entero.
+                if (!/[+\-*/()]/.test(expression)) {
+                    if (!expression.match(/^\d+$/)) {
+                        semanticErrors.push(`Error semántico en línea ${lineIndex + 1}: Asignación inválida a variable de tipo int. Se esperaba un entero literal.`);
+                    }
+                } else {
+                    // Heurística: si la expresión contiene solo dígitos, operadores, puntos y paréntesis.
+                    let exprNoSpaces = expression.replace(/\s/g, "");
+                    if (!exprNoSpaces.match(/^[\d+\-*/.()]+$/)) {
+                        semanticErrors.push(`Error semántico en línea ${lineIndex + 1}: Asignación inválida a variable de tipo int. La expresión no es exclusivamente numérica.`);
+                    }
+                }
+            } else if (type === "double") {
+                if (!/[+\-*/()]/.test(expression)) {
+                    if (!expression.match(/^\d+(\.\d+)?$/)) {
+                        semanticErrors.push(`Error semántico en línea ${lineIndex + 1}: Asignación inválida a variable de tipo double. Se esperaba un literal numérico (con o sin decimal).`);
+                    }
+                } else {
+                    let exprNoSpaces = expression.replace(/\s/g, "");
+                    if (!exprNoSpaces.match(/^[\d+\-*/.()]+$/)) {
+                        semanticErrors.push(`Error semántico en línea ${lineIndex + 1}: Asignación inválida a variable de tipo double. La expresión no es exclusivamente numérica.`);
+                    }
+                }
+            } else if (type === "bool") {
+                if (!expression.match(/^(true|false)$/)) {
+                    semanticErrors.push(`Error semántico en línea ${lineIndex + 1}: Asignación inválida a variable de tipo bool. Se esperaba "true" o "false".`);
+                }
+            } else if (type === "List") {
+                if (!expression.match(/^\[.*\]$/)) {
+                    semanticErrors.push(`Error semántico en línea ${lineIndex + 1}: Asignación inválida a variable de tipo List. Se esperaba una lista literal.`);
+                }
             }
         }
     });
-    // (b) Validar uso de variables: ignorar identificadores dentro de cadenas.
+    // (b) Validar uso de variables: cada identificador usado (fuera de literales) debe estar declarado.
     const usageReserved = ["void", "main", "print", "if", "else", "for", "while", "return",
         "var", "String", "int", "double", "bool", "List"];
     cleanLines.forEach((line, lineIndex) => {
-        // Eliminar literales de cadena para evitar falsos positivos
+        // Eliminar literales de cadena para no evaluar identificadores en ellos.
         let lineWithoutStrings = line.replace(/(["'])(?:(?=(\\?))\2.)*?\1/g, "");
         const tokens = lineWithoutStrings.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g);
         if (tokens) {
             tokens.forEach(token => {
                 if (usageReserved.includes(token)) return;
                 if (!isNaN(token)) return;
-                if (!declaredVariables.includes(token)) {
+                if (!(token in declaredVariables)) {
                     semanticErrors.push(`Error semántico en línea ${lineIndex + 1}: Variable no declarada "${token}".`);
                 }
             });
