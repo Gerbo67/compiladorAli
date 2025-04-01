@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compilador Ali</title>
+    <link rel="icon" href="/assets/flor-BN0-Oubw.ico" type="image/x-icon">
+  <script type="module" crossorigin src="/assets/index-CITS4oEO.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CSaD4K1x.css">
+</head>
+<body>
+<div class="content-wrapper">
+    <!-- Editor de código con scrolls en ambas direcciones -->
+    <div class="main-container">
+        <div class="code-editor">
+            <!-- Botones de acción -->
+            <div class="action-buttons">
+                <div class="button-container">
+                    <button id="runButton" class="action-button">Run</button>
+                    <span class="button-divider"></span>
+                    <button id="copyButton" class="action-button">Copy</button>
+                </div>
+            </div>
+
+            <div class="scroll-container" id="scrollContainer">
+                <div class="editor-content">
+                    <!-- Contenedor para números de línea fijos durante scroll horizontal -->
+                    <div class="line-numbers-container">
+                        <div class="line-numbers" id="lineNumbers"></div>
+                    </div>
+                    <!-- Contenedor para el área de código -->
+                    <div class="code-container" id="codeContainer">
+                        <!-- Capa de resaltado (se muestra detrás) -->
+                        <pre id="highlightedCode" class="highlighted-code"></pre>
+                        <!-- Área de edición -->
+                        <textarea class="code-area" id="codeArea" spellcheck="false" wrap="off"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedores de análisis -->
+    <div class="bottom-containers">
+        <div class="bottom-container">
+            <div class="container-header">
+                <h3 class="container-title">LEXICAL ANALYSIS</h3>
+            </div>
+            <div class="container-body scrollable-content">
+                <p class="container-content" id="lexicalContent"></p>
+            </div>
+        </div>
+        <div class="bottom-container">
+            <div class="container-header">
+                <h3 class="container-title">SYNTACT ANALYSIS</h3>
+            </div>
+            <div class="container-body scrollable-content">
+                <p class="container-content" id="syntacticContent"></p>
+            </div>
+        </div>
+        <div class="bottom-container">
+            <div class="container-header">
+                <h3 class="container-title">SEMANTIC ANALYSIS</h3>
+            </div>
+            <div class="container-body scrollable-content">
+                <p class="container-content" id="semanticContent"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Esperar un momento para asegurar que todos los scripts estén cargados
+        setTimeout(() => {
+            if (typeof updateHighlighting === 'function') {
+                updateHighlighting();
+            }
+        }, 300);
+    });
+</script>
+
+</body>
+</html>
