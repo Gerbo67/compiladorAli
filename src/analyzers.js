@@ -1,16 +1,4 @@
-﻿/* analyzers.js - Análisis y resaltado de sintaxis para código Dart (básico)
-   ====================================================
-   - Análisis Léxico: Se tokeniza cada línea y se reportan tokens no válidos.
-   - Análisis Sintáctico: Se verifica la existencia de la función main, terminación de sentencias
-                           y la forma básica de condicionales y ciclos (verificando paréntesis).
-   - Análisis Semántico:
-         • Variables: Se recolectan las variables declaradas y se verifica que cada variable usada
-                      (fuera de literales de cadena) haya sido declarada previamente.
-         • Condicionales y ciclos: Se valida que tengan paréntesis.
-   - Resaltado de Sintaxis: Se colorean palabras clave, cadenas, comentarios, números, identificadores y operadores.
-*/
-
-//////////////////////
+﻿//////////////////////
 // Funciones Básicas
 //////////////////////
 
