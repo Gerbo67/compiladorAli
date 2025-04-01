@@ -41,7 +41,7 @@ window.addEventListener('load', () => {
 
 void main() {
   // Mensaje de bienvenida
-  print('¡Hola mundo desde Dart!');
+  print("¡Hola mundo desde Dart!");
   
   // Ejemplo de variable
   String mensaje = "Analizador funcionando correctamente";

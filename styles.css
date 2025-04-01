@@ -279,9 +279,9 @@ body {
 }
 
 /* Colores de tokens (paleta basada en rosa mexicano y púrpura) */
-.token-keyword    { color: #E91E63; }
-.token-string     { color: #e428da; }
-.token-comment    { color: #142dad; }
-.token-number     { color: #D81B60; }
-.token-identifier { color: #FFFFFF; }
-.token-operator   { color: #BA68C8; }
+.token-keyword    { color: #f581ee; }
+.token-string     { color: #e4be28; }
+.token-comment    { color: #189457; }
+.token-number     { color: #7067b7; }
+.token-identifier { color: #be6f6f; }
+.token-operator   { color: #d3d3d3; }
