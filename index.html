@@ -11,6 +11,15 @@
     <!-- Editor de código con scrolls en ambas direcciones -->
     <div class="main-container">
         <div class="code-editor">
+            <!-- Botones de acción -->
+            <div class="action-buttons">
+                <div class="button-container">
+                    <button id="runButton" class="action-button">Run</button>
+                    <span class="button-divider"></span>
+                    <button id="copyButton" class="action-button">Copy</button>
+                </div>
+            </div>
+
             <div class="scroll-container" id="scrollContainer">
                 <div class="editor-content">
                     <!-- Contenedor para números de línea fijos durante scroll horizontal -->
@@ -19,6 +28,9 @@
                     </div>
                     <!-- Contenedor para el área de código -->
                     <div class="code-container" id="codeContainer">
+                        <!-- Capa de resaltado (se muestra detrás) -->
+                        <pre id="highlightedCode" class="highlighted-code"></pre>
+                        <!-- Área de edición -->
                         <textarea class="code-area" id="codeArea" spellcheck="false" wrap="off"></textarea>
                     </div>
                 </div>
@@ -32,29 +44,40 @@
             <div class="container-header">
                 <h3 class="container-title">LEXICAL ANALYSIS</h3>
             </div>
-            <div class="container-body">
-                <p class="container-content">NO ERROR</p>
+            <div class="container-body scrollable-content">
+                <p class="container-content" id="lexicalContent"></p>
             </div>
         </div>
         <div class="bottom-container">
             <div class="container-header">
                 <h3 class="container-title">SYNTACT ANALYSIS</h3>
             </div>
-            <div class="container-body">
-                <p class="container-content">NO ERROR</p>
+            <div class="container-body scrollable-content">
+                <p class="container-content" id="syntacticContent"></p>
             </div>
         </div>
         <div class="bottom-container">
             <div class="container-header">
                 <h3 class="container-title">SEMANTIC ANALYSIS</h3>
             </div>
-            <div class="container-body">
-                <p class="container-content">NO ERROR</p>
+            <div class="container-body scrollable-content">
+                <p class="container-content" id="semanticContent"></p>
             </div>
         </div>
     </div>
 </div>
 
-<script src="commonEditor.js"></script>
+<script type="module" src="/src/main.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Esperar un momento para asegurar que todos los scripts estén cargados
+        setTimeout(() => {
+            if (typeof updateHighlighting === 'function') {
+                updateHighlighting();
+            }
+        }, 300);
+    });
+</script>
+
 </body>
 </html>

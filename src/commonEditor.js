@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function() {
+﻿document.addEventListener('DOMContentLoaded', function () {
     const codeArea = document.getElementById('codeArea');
     const lineNumbers = document.getElementById('lineNumbers');
     const scrollContainer = document.getElementById('scrollContainer');
@@ -41,7 +41,7 @@
     codeArea.addEventListener('input', updateLineNumbers);
 
     // Manejar tecla Tab
-    codeArea.addEventListener('keydown', function(e) {
+    codeArea.addEventListener('keydown', function (e) {
         if (e.key === 'Tab') {
             e.preventDefault();
 
@@ -52,11 +52,15 @@
             this.selectionStart = this.selectionEnd = start + 4;
 
             updateLineNumbers();
+
+            if (typeof updateHighlighting === "function") {
+                updateHighlighting();
+            }
         }
     });
 
     // Agregar evento de clic al contenedor de scroll para activar el foco en el textarea
-    scrollContainer.addEventListener('click', function(e) {
+    scrollContainer.addEventListener('click', function (e) {
         if (e.target === scrollContainer || e.target === codeContainer || e.target.closest('.editor-content')) {
             // Enfocar el textarea
             codeArea.focus();
@@ -66,10 +70,5 @@
             }
         }
     });
-
-    // Insertar texto de ejemplo inicial
-    codeArea.value = "// Este es un ejemplo de código";
-
-    // Asegurar que hay al menos una línea inicial
     updateLineNumbers();
 });
