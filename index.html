@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Código con Análisis</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="content-wrapper">
+    <!-- Editor de código con scrolls en ambas direcciones -->
+    <div class="main-container">
+        <div class="code-editor">
+            <div class="scroll-container" id="scrollContainer">
+                <div class="editor-content">
+                    <!-- Contenedor para números de línea fijos durante scroll horizontal -->
+                    <div class="line-numbers-container">
+                        <div class="line-numbers" id="lineNumbers"></div>
+                    </div>
+                    <!-- Contenedor para el área de código -->
+                    <div class="code-container" id="codeContainer">
+                        <textarea class="code-area" id="codeArea" spellcheck="false" wrap="off"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedores de análisis -->
+    <div class="bottom-containers">
+        <div class="bottom-container">
+            <div class="container-header">
+                <h3 class="container-title">LEXICAL ANALYSIS</h3>
+            </div>
+            <div class="container-body">
+                <p class="container-content">NO ERROR</p>
+            </div>
+        </div>
+        <div class="bottom-container">
+            <div class="container-header">
+                <h3 class="container-title">SYNTACT ANALYSIS</h3>
+            </div>
+            <div class="container-body">
+                <p class="container-content">NO ERROR</p>
+            </div>
+        </div>
+        <div class="bottom-container">
+            <div class="container-header">
+                <h3 class="container-title">SEMANTIC ANALYSIS</h3>
+            </div>
+            <div class="container-body">
+                <p class="container-content">NO ERROR</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="commonEditor.js"></script>
+</body>
+</html>
