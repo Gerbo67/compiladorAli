@@ -61,6 +61,36 @@ function tokenizeLine(line, lineIndex, lexicalErrors) {
 }
 
 //////////////////////////
+// Validación de Balance
+//////////////////////////
+
+// Verifica de forma básica que en la línea (sin cadenas) los paréntesis, corchetes y llaves estén balanceados.
+function checkBalance(line, lineIndex) {
+    // Eliminar cadenas simples o dobles para no contar símbolos dentro de ellas.
+    let lineWithoutStrings = line.replace(/(["'])(?:(?=(\\?))\2.)*?\1/g, "");
+    let errors = [];
+    let countPar = 0, countBrack = 0, countBrace = 0;
+    for (let char of lineWithoutStrings) {
+        if (char === "(") countPar++;
+        else if (char === ")") countPar--;
+        else if (char === "[") countBrack++;
+        else if (char === "]") countBrack--;
+        else if (char === "{") countBrace++;
+        else if (char === "}") countBrace--;
+    }
+    if (countPar !== 0) {
+        errors.push(`Error sintáctico en línea ${lineIndex + 1}: Paréntesis no balanceados.`);
+    }
+    if (countBrack !== 0) {
+        errors.push(`Error sintáctico en línea ${lineIndex + 1}: Corchetes no balanceados.`);
+    }
+    if (countBrace !== 0) {
+        errors.push(`Error sintáctico en línea ${lineIndex + 1}: Llaves no balanceadas.`);
+    }
+    return errors;
+}
+
+//////////////////////////
 // Función de Resaltado
 //////////////////////////
 
@@ -104,6 +134,7 @@ function applySyntaxHighlighting(code) {
 
 function updateHighlighting() {
     let code = document.getElementById("codeArea").value;
+    // Reemplazar tabs por 4 espacios para consistencia
     code = code.replace(/\t/g, '    ');
     document.getElementById("highlightedCode").innerHTML = applySyntaxHighlighting(code);
 }
@@ -133,6 +164,7 @@ function analyzeCode() {
     }
     cleanLines.forEach((line, lineIndex) => {
         const trimmed = line.trim();
+        // Validación básica de terminación de sentencias (salvo excepciones)
         if (trimmed !== "" &&
             !trimmed.endsWith("{") &&
             !trimmed.endsWith("}") &&
@@ -146,14 +178,16 @@ function analyzeCode() {
                 syntacticErrors.push(`Error sintáctico en línea ${lineIndex + 1}: Falta ";" al final de la sentencia.`);
             }
         }
-    });
-    // Validar condicionales y ciclos (deben tener paréntesis)
-    cleanLines.forEach((line, lineIndex) => {
-        const trimmed = line.trim();
+        // Validar estructuras condicionales y ciclos: deben incluir paréntesis.
         if (trimmed.startsWith("if") || trimmed.startsWith("for") || trimmed.startsWith("while")) {
             if (!trimmed.includes("(") || !trimmed.includes(")")) {
                 syntacticErrors.push(`Error sintáctico en línea ${lineIndex + 1}: Estructura mal formada en "${trimmed.split(" ")[0]}".`);
             }
+        }
+        // Validación de balance de paréntesis, corchetes y llaves (línea por línea)
+        const balanceErrors = checkBalance(line, lineIndex);
+        if (balanceErrors.length > 0) {
+            syntacticErrors.push(...balanceErrors);
         }
     });
 
@@ -172,12 +206,11 @@ function analyzeCode() {
             }
         }
     });
-    // (b) Validar uso de variables: se ignoran los tokens que estén dentro de literales de cadena.
-    // Primero, eliminar las cadenas de la línea antes de extraer tokens para validación.
+    // (b) Validar uso de variables: ignorar identificadores dentro de cadenas.
     const usageReserved = ["void", "main", "print", "if", "else", "for", "while", "return",
         "var", "String", "int", "double", "bool", "List"];
     cleanLines.forEach((line, lineIndex) => {
-        // Eliminar contenido de cadenas (dobles o simples)
+        // Eliminar literales de cadena para evitar falsos positivos
         let lineWithoutStrings = line.replace(/(["'])(?:(?=(\\?))\2.)*?\1/g, "");
         const tokens = lineWithoutStrings.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g);
         if (tokens) {
